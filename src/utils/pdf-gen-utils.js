@@ -1,0 +1,696 @@
+import marked from 'marked';
+import { getTypeInfo, schemaToModel, schemaToPdf, removeCircularReferences} from '@/utils/common-utils';
+
+//Info Def
+export function getInfoDef(spec, bookTitle){
+  let content;
+  if (spec.info){
+    let contactDef=[], contactName, contactEmail, contactUrl, termsOfService;
+
+    if (spec.info.contact){
+      if (spec.info.contact.name){
+        contactName = {text:[{text:'Name: ', style:['b','small']}, {text:spec.info.contact.name, style:['small']}]}; 
+      }
+      if (spec.info.contact.email){
+        contactEmail = {text:[{text:'Email: ', style:['b','small']}, {text:spec.info.contact.email, style:['small']}]};
+      }
+      if (spec.info.contact.url){
+        contactUrl = {text:[{text:'URL: ', style:['b','small']}, {text:spec.info.contact.url, style:['small','blue'],link:spec.info.contact.url}]};
+      }
+      if (spec.info.termsOfService){
+        termsOfService = {text:[{text:'\nTerms of service: ', style:['b','small']}, {text:spec.info.termsOfService, style:['small','blue'],link:spec.info.termsOfService}]};
+      }
+      contactDef= [
+        {text:'CONTACT', style:['p', 'b', 'topMargin3']},
+        {text:[ 
+          contactName, 
+          contactEmail,
+          contactUrl,
+          termsOfService
+        ]}
+      ]
+    }
+
+    let specInfDescrMarkDef;
+    if (spec.info.description){
+      let tokens = marked.lexer(spec.info.description);
+      specInfDescrMarkDef = {
+        stack: getMarkDownDef(tokens),
+        style: ['topMargin3']
+      }
+    }
+    else{
+      specInfDescrMarkDef='';
+    }
+
+    content = [
+      {text: bookTitle ? bookTitle:'API Reference', style:['h2', 'primary','right', 'b', 'topMargin1']},
+      (spec.info.title ? {text:spec.info.title, style:['title', 'right']} : ''),
+      (spec.info.version ? {text:`API Version: ${spec.info.version}`, style:['p','b', 'right', 'alternate']} : ''),
+      specInfDescrMarkDef,
+      ...contactDef,
+      {text:'', pageBreak:'after'}
+    ];
+
+  }
+  else{
+    content = [
+      {text:bookTitle?bookTitle:'API Reference', style:['h1', 'bold', 'primary','right', 'topMargin1']}
+    ];
+  }
+  return content;
+};
+
+//Security Def
+export function getSecurityDef(spec, tableLayout){
+  let content =[]
+  if (spec.securitySchemes){
+    content.push( {text:'Security and Authentication', style:['h3', 'b', 'primary','right', 'topMargin3']} );
+    content.push({text:'SECURITY SCHEMES', style:['b','tableMargin']});
+    let tableContent = [
+      [ {text: 'TYPE', style: ['small','b']}, {text: 'DESCRIPTION', style: ['small','b']} ]
+    ];
+    for (const key in spec.securitySchemes) {
+      tableContent.push([
+        spec.securitySchemes[key].type,
+        spec.securitySchemes[key].description?spec.securitySchemes[key].description:"",
+      ]);
+    }
+  
+    content.push({
+      table: {
+        headerRows: 1,
+        body: tableContent,
+      },
+      layout: tableLayout,
+      style: 'tableMargin'
+    });
+  }
+  return content;
+};
+
+// API details def
+export function getApiDef(spec, filterPath, sectionHeading, tableLayout){
+
+  let content =[{text: sectionHeading, style:['h2','b'],pageBreak:'before'}];
+  let tagSeq=0;
+
+  // Sort by Tag name (allready sorted)
+  // spec.tags.sort((a, b) =>  (a.name < b.name ? -1 : (a.name > b.name ? 1: 0)) );
+
+  spec.tags.map(function(tag, i){
+    let operationContent=[];
+    let pathSeq = 0;
+
+    for (let j = 0; j < tag.paths.length; j++) {
+      let path = tag.paths[j];
+      if (filterPath.trim()!=''){
+        if (path.path.includes(filterPath) === false){
+          continue;
+        }
+      }
+      pathSeq = pathSeq + 1;
+      operationContent.push({ 
+        text:`${tagSeq+1}.${pathSeq} ${path.method.toUpperCase()} ${path.path}`,
+        style:['topMargin3','mono','p', 'primary'],
+        tocItem: true,
+        tocStyle: ['small','blue','mono'],
+        tocNumberStyle:['small','blue','mono'],
+      });
+
+      if (path.description || path.summary){
+
+        let pathDescrMarkDef, tokens;
+        if (path.description) {
+          tokens = marked.lexer(path.description);
+          pathDescrMarkDef = {
+            stack: getMarkDownDef(tokens),
+            style:['topMarginRegular'],
+          }
+        }
+        else {
+          if (path.summary){
+            tokens = marked.lexer(path.summary);
+            pathDescrMarkDef = {
+              stack: getMarkDownDef(tokens),
+              style:['topMarginRegular'],
+            }
+          }
+          pathDescrMarkDef='';
+        }
+        if (pathDescrMarkDef){
+          operationContent.push(pathDescrMarkDef);
+        }
+      }
+      let requestSetDef = [];
+      const pathParams   = path.parameters ? path.parameters.filter(param => param.in === 'path'):null;
+      const queryParams  = path.parameters ? path.parameters.filter(param => param.in === 'query'):null;
+      const headerParams = path.parameters ? path.parameters.filter(param => param.in === 'header'):null;
+      const cookieParams = path.parameters ? path.parameters.filter(param => param.in === 'cookie'):null;
+
+      const pathParamTableDef     = getParameterTableDef(pathParams, 'path',tableLayout);
+      const queryParamTableDef    = getParameterTableDef(queryParams, 'query',tableLayout);
+      const requestBodyTableDefs  = getRequestBodyDef(path.requestBody, tableLayout);
+      const headerParamTableDef   = getParameterTableDef(headerParams, 'header',tableLayout);
+      const cookieParamTableDef   = getParameterTableDef(cookieParams, 'cookie',tableLayout);
+
+      operationContent.push({ text: 'REQUEST', style:['p', 'b', 'alternate'], margin:[0, 10, 0, 0]});
+      if (pathParamTableDef || queryParamTableDef || headerParamTableDef || cookieParamTableDef || requestBodyTableDefs){
+        if (pathParamTableDef){
+          requestSetDef.push(pathParamTableDef);
+        }
+        if (queryParamTableDef){
+          requestSetDef.push(queryParamTableDef);
+        }
+        if (requestBodyTableDefs){
+          requestBodyTableDefs.map(function(v){
+            requestSetDef.push(v);
+          });
+        }
+        if (headerParamTableDef){
+          requestSetDef.push(headerParamTableDef);
+        }
+        if (cookieParamTableDef){
+          requestSetDef.push(cookieParamTableDef);
+        }
+
+      }
+      else{
+        requestSetDef.push({ text: 'No request parameters', style:['small', 'gray'], margin:[0, 5, 0, 0]});
+      }
+
+      operationContent.push({
+        stack:requestSetDef,
+        margin:[10, 0, 0, 0]
+      });
+
+
+      let respDef = getResponseDef(path.responses, tableLayout)
+      operationContent.push({ text: 'RESPONSE', style:['p', 'b', 'alternate'], margin:[0, 10, 0, 0]});
+      operationContent.push({
+        stack:respDef,
+        margin:[10, 5, 0, 5]
+      });
+    };
+
+    
+    if (pathSeq > 0){
+      tagSeq = tagSeq + 1;
+      let tagDescrMarkDef, tokens;
+      if (tag.description) {
+        tokens = marked.lexer(tag.description);
+        tagDescrMarkDef = {
+          stack: getMarkDownDef(tokens),
+          style:['topMarginRegular'],
+        }
+      }
+      else{
+        tagDescrMarkDef={text:''}
+      }
+
+      //tag.description = tag.description.replace(/ /g, '\u200B ');
+      content.push(
+        { 
+          text: `${tagSeq}. ${tag.name.toUpperCase()}`, 
+          style:['h2', 'b', 'primary', 'tableMargin'], 
+          pageBreak:tagSeq==1?'none':'before' ,
+          tocItem: true,
+          tocStyle: ['small', 'b'],
+          tocMargin: [0, 10, 0, 0],
+        },
+        tagDescrMarkDef,
+        operationContent
+      );
+    }
+    
+  });
+
+  return content;
+
+}
+
+
+//Request Body Def
+function getRequestBodyDef(requestBody, tableLayout){
+  if (!requestBody){
+    return;
+  }
+  let content=[];
+  let formParamTableDef;
+  
+  for(let contentType in requestBody.content ) {
+    let contentTypeObj = requestBody.content[contentType];
+    let requestBodyTableDef;
+    if (contentType.includes('form') || contentType.includes('multipart-form')){
+      formParamTableDef = getParameterTableDef(contentTypeObj.schema.properties, "FORM DATA", tableLayout);
+      content.push(formParamTableDef);
+    }
+    else{
+      let origSchema = requestBody.content[contentType].schema;
+      if (origSchema){
+        origSchema = JSON.parse(JSON.stringify(origSchema, removeCircularReferences()));
+        requestBodyTableDef = schemaToPdf(origSchema);
+        if (requestBodyTableDef && requestBodyTableDef[0] && requestBodyTableDef[0].stack){
+          requestBodyTableDef[0].colSpan=undefined;
+          requestBodyTableDef = {
+            margin:[0,5,0,0],
+            //layout:tableLayout,
+            layout:'noBorders',
+            table: {
+              widths:['*'],
+              body: [
+                [{text:'REQUEST BODY '+  contentType, style:['small','b']}],
+                requestBodyTableDef
+              ]
+            }
+          };
+        }
+        else {
+          requestBodyTableDef={text:''}
+        }
+      }
+      content.push(requestBodyTableDef);
+    }
+  }
+  return content;
+}
+
+//Parameter Table
+function getParameterTableDef(parameters, paramType, tableLayout){
+  //let filteredParams= parameters ? parameters.filter(param => param.in === paramType):[];
+  if (parameters.length == 0 ){
+    return;
+  }
+  let tableContent = [
+    [ 
+      {text: 'NAME', style: ['sub','b','alternate']}, 
+      {text: 'TYPE', style: ['sub','b','alternate']},
+      {text: 'DESCRIPTION', style: ['sub','b','alternate']}
+    ]
+  ];
+  
+  if (paramType ===  "FORM DATA"){
+
+    for (let paramName in parameters){
+      const param = parameters[paramName];
+      let type = param.type;
+      let format=param.format==='binary' ?'(binary)':''
+      if (type==='array'){
+        type = "array of " + param.items.type;
+      }
+      tableContent.push([
+        { text:paramName, style:['small','mono'] },
+        { text:type + format, style:['small','mono'] },
+        { text:param.description, style:['small'],margin:[0,2,0,0]},
+      ]);  
+    }
+
+  }
+  else{
+    parameters.map(function(param){
+      let paramSchema = getTypeInfo(param.schema);
+      tableContent.push([
+        { 
+          text:[
+            {text:paramSchema.required?'*':'', style:['small','b','red','mono'] },
+            {text:param.name, style:['small','mono'] },
+            (paramSchema.depricated ?{text:'\nDEPRICATED',style:['small','red','b'] }:undefined)
+          ]
+        },
+        {
+          stack:[
+            { text: `${paramSchema.type==='array' ? paramSchema.arrayType:paramSchema.type}${paramSchema.format ? `(${paramSchema.format})`:'' }`, style:['small','mono']},
+            ( paramSchema.constrain ? { text: paramSchema.constrain, style:['small', 'gray']}:''),
+            ( paramSchema.allowedValues ? { text:[
+                {text: 'allowed: ', style:['b','small']},
+                {text: paramSchema.allowedValues, style:['small', 'gray']}
+              ]} : ''
+            ),
+            ( paramSchema.pattern ? { text: `pattern: ${paramSchema.pattern}`, style:['small','gray']}:''),
+          ]
+        },
+        { text:param.description, style:['small'],margin:[0,2,0,0]},
+      ]);
+    });
+  }
+
+  return [
+    {text: `${paramType} Parameters`.toUpperCase(), style:['small', 'b'], margin:[0,10,0,0]},
+    {
+      table: {
+        headerRows: 1,
+        dontBreakRows: true,
+        widths: ['auto', 'auto', '*'],
+        body: tableContent
+      },
+      layout: tableLayout,
+      style: 'tableMargin'
+    }
+  ];
+
+}
+
+
+function getDataUri(url, callback) {
+    var image = new Image();
+
+    image.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
+        canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
+
+        canvas.getContext('2d').drawImage(this, 0, 0);
+
+        // Get raw image data
+        callback(canvas.toDataURL());
+
+        // ... or get as Data URI
+        // callback(canvas.toDataURL('image/png'));
+    };
+
+    image.src = url;
+}
+
+//Response Def
+function getResponseDef(responses, tableLayout){
+  let respDef=[];
+  let allResponseModelTabelDefs=[];
+  for(let statusCode in responses) {
+    for(let contentType in responses[statusCode].content ) {
+      let reponseModelTableDef;
+      let origSchema = responses[statusCode].content[contentType].schema;
+      if (origSchema){
+        origSchema = JSON.parse(JSON.stringify(origSchema, removeCircularReferences()));
+        reponseModelTableDef = schemaToPdf(origSchema);
+        if (reponseModelTableDef && reponseModelTableDef[0] && reponseModelTableDef[0].stack){
+          reponseModelTableDef[0].colSpan=undefined;
+          reponseModelTableDef = {
+            margin:[0,5,0,0],
+            //layout:tableLayout,
+            layout:'noBorders',
+            table: {
+              widths:['*'],
+              body: [
+                [{text:`RESPONSE MODEL (${contentType})`,style:['small','b']}],
+                reponseModelTableDef
+              ]
+            }
+          };
+          allResponseModelTabelDefs.push(reponseModelTableDef);
+        }
+      }
+    }
+
+    respDef.push({
+      text:[
+        {text: `STATUS CODE - ${statusCode}: `, style:['small', 'b']},
+        {text: responses[statusCode].description, style:['small']}
+      ],
+      margin:[0,10,0,0]
+    });
+
+    allResponseModelTabelDefs.map(function(respModelTableDef){
+      respDef.push(respModelTableDef);
+    })
+  }
+  return respDef;
+}
+
+//API List Def
+export function getApiListDef(spec, sectionHeading, tableLayout) {
+  let content =[{text: sectionHeading, style:['h3','b'],pageBreak:'before'}];
+  spec.tags.map(function(tag, i){
+    let tableContent = [
+      [ {text: 'METHOD', style: ['small','b']}, {text: 'API', style: ['small','b']}]
+    ];
+
+    tag.paths.map(function(path){
+      tableContent.push([
+        { text:path.method, style:['small','mono','right'] },
+        {
+          margin:[0,0,0,2],
+          stack:[
+            { text:path.path, style:['small','mono']},
+            { text:path.summary, style:['small','gray']},
+          ]
+
+        }
+      ]);
+    });
+
+    content.push(
+      {text: tag.name, style:['h6','b','primary','tableMargin'], pageBreak:i==0?'none':'before'},
+      {text: tag.description, style:['p']},
+      {
+        table: {
+          headerRows: 1,
+          dontBreakRows: true,
+          widths: ['auto', '*'],
+          body: tableContent
+        },
+        layout: tableLayout,
+        style: 'tableMargin'
+      }
+    );
+  });
+
+  return content;
+}
+
+//Override buildin parser constructor
+marked.prototype.constructor.Parser.prototype.parse = function (src) {
+    this.inline = new marked.InlineLexer(src.links, this.options, this.renderer);
+    //custom rule/syntax
+    this.inline.rules.link = /^[!@]?\[((?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*)\]\(\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*\)/;
+    this.tokens = src.reverse();
+
+    var out = '';
+    while (this.next()) {
+        out += this.tok();
+    }
+
+    return out;
+};
+
+//Customize the outputLink Inline lexer
+marked.InlineLexer.prototype.outputLink = function(cap, link) {
+  var href = escape(link.href)
+    , title = link.title ? escape(link.title) : null;
+
+  console.log(title);
+
+  if (cap[0].charAt(0) === '@') {
+    return this.renderer.articles(
+        cap[1],
+        cap[2]
+    );
+  }
+
+  return cap[0].charAt(0) !== '!'
+    ? this.renderer.link(href, title, this.output(cap[1]))
+    : this.renderer.image(href, title, escape(cap[1]));
+};
+
+export function getMarkDownDef(tokens){
+  let content = [];
+  let uList={ ul:[], style:['topMarginRegular'] };
+  let oList={ ol:[], style:['topMarginRegular'] };
+  let listInsert='';
+  
+  tokens.forEach(function(v){
+    if (v.type==='paragraph'){
+      let textArr = getInlineMarkDownDef(v.text);
+      // check if content is image:
+      // var renderer = new marked.Renderer;
+      // renderer.image = function(href, title, alt) {
+      //   content.push({
+      //     text:"bunnybunny: " + href
+      //   });
+      //   return marked.Renderer.prototype.image.apply(this, arguments);
+      // }
+      // textArr.forEach(function(element) {
+      //   marked(element.text, {renderer: renderer});
+      //   // if (renderer.image){
+      //     content.push({
+      //       text:element.text + ' babab',
+      //       style:['topMarginRegular']
+      //     });
+      //   // }
+      // });
+      
+      content.push({
+        stack:textArr,
+        style:['topMarginRegular']
+      });
+
+      // console.log(textArr);
+    }
+    else if (v.type==='heading'){
+      let headingStyle = [];
+      if (v.depth===6){
+        headingStyle=['small','b','topMarginRegular'];
+      }
+      else if (v.depth===5){
+        headingStyle=['p','b','topMarginRegular'];
+      }
+      else{
+        headingStyle.push(`h${v.depth+2}`);
+        headingStyle.push('topMarginRegular');
+      }
+
+      content.push({
+        text:v.text,
+        style:headingStyle
+      });
+    }
+    else if (v.type==='space'){
+      let headingStyle = []
+      headingStyle.push(`h${v.depth}`);
+      content.push({
+        text:'\u200B ',
+        style:['small','topMarginRegular'],
+      });
+    }
+    else if (v.type==='code'){
+      let newText = v.text.replace(/ /g, '\u200B ');
+      content.push({
+        text:newText,
+        style:['small', 'mono', 'gray','topMarginRegular'],
+      });
+    }
+    else if (v.type==='list_start'){
+      listInsert= v.ordered?'ol':'ul';
+      if (v.ordered){
+        listInsert='ol'
+        oList.start =  v.start;
+      }
+      else{
+        listInsert= 'ul';
+      }
+    }
+    else if (v.type==='list_item_start' || v.type==='list_item_end'){
+      
+    }
+    else if (v.type==='text'){
+      let textArr = getInlineMarkDownDef(v.text);
+      if (listInsert==='ul'){
+        uList.ul.push({
+          text:textArr
+        });
+      }
+      else if (listInsert==='ol'){
+        oList.ol.push({
+          text:textArr
+        });
+      }
+    }
+    else if (v.type==='list_end'){
+      // Clone the appropriate list and add it to the main content 
+      if (listInsert==='ul'){
+        content.push(
+          Object.assign({}, uList)
+        );
+      }
+      else if (listInsert==='ol'){
+        content.push(
+          Object.assign({}, oList)
+        );
+      }
+      // reset temp list elements 
+      uList={ ul:[], style:['topMarginRegular'] };
+      oList={ ol:[], style:['topMarginRegular'] };
+      listInsert='';
+    }
+    else {
+      console.log(v);
+    }
+    
+  });
+  return content;
+
+}
+
+export function getInlineMarkDownDef(txt){
+  var final=[];
+  if (!txt){
+    return [];
+  }
+  let boldItalicDelimiter = new RegExp("\\*{3}|\\_{3}");
+  let boldDelimiter = new RegExp("\\*{2}|\\_{2}");
+  let codeDelimiter = new RegExp("`");
+  if (!txt.split){
+    console.log(txt);
+  }
+
+  function imageSplit(text, style){
+    let imageRegex = /([!@]?\[(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*\]\(\s*<?[\s\S]*?>?(?:\s+['"][\s\S]*?['"])?\s*\))/;
+    let imageArgsGroup = /[!@]?\[(?<altText>(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*)\]\(\s*<?(?<src>[\s\S]*?)>?(?:\s+['"](?<titleText>[\s\S]*?)['"])?(?:\s+=(?<width>[0-9]+)x(?<height>[0-9]+)?)?\s*\)/
+    text.split(imageRegex).forEach(function(val){
+      let match = val.match(imageArgsGroup);
+      if (match){
+        
+        final.push({text:':::img::: ' + match.groups.altText + ' src: ' + match.groups.src + ' width: ' + match.groups.width + ':::img:::', style:style});
+        final.push(new Promise(function(resolve, reject){
+          fetch(match.groups.src).then(function(response){
+            response.blob().then(function(blob){
+              var reader = new FileReader();
+              reader.readAsDataURL(blob);
+              reader.onloadend = function() {
+                resolve({
+                  image: reader.result
+                });
+              }
+            });
+          });
+        }));
+      }
+      else {
+        final.push({text:val, style:style});
+      }
+    });
+  };
+
+  let bi_parts = txt.split(boldItalicDelimiter);
+  bi_parts.forEach(function(bi_val,i){
+    if (i%2 === 0){
+      if (bi_val){
+        let b_parts = bi_val.split(boldDelimiter);
+        b_parts.forEach(function(b_val,j){
+          if (j%2 === 0){
+            if (b_val){
+              let c_parts = b_val.split(codeDelimiter);
+              c_parts.forEach(function(c_val,k){
+                if (k%2 === 0){
+                  if (c_val){
+                    imageSplit(c_val, ['small']);
+                    // final.push({ text:c_val,style:['small']});
+                  }
+                }
+                else{
+                  if (c_val.trim){
+                    imageSplit(c_val, ['small','mono','gray']);
+                    // final.push({ text:c_val,style:['small','mono', 'gray']});
+                  }
+                }
+              });
+
+            }
+          }
+          else{
+            if (b_val){
+              imageSplit(b_val, ['small','bold']);
+              // final.push({text:b_val,style:['small','bold']});
+            }
+          }
+        });
+      }
+    }
+    else{
+      if(bi_val){
+        imageSplit(bi_val, ['small','bold','italics']);
+        // final.push({ text:bi_val, style:['small','bold', 'italics']});
+      }
+    }
+  });
+  return final;
+}
