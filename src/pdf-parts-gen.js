@@ -10,7 +10,7 @@ import {
 
 function markdownToPdfmake(markdown) {
   const html = marked(markdown);
-  return htmlToPdfmake(html);   
+  return htmlToPdfmake(html);
 }
 
 // Info Def
@@ -53,7 +53,7 @@ export function getInfoDef(spec, bookTitle, localize) {
     if (spec.info.description) {
       specInfDescrMarkDef = {
         stack: markdownToPdfmake(spec.info.description),
-        style: ['topMargin3'],
+        style: ['topMargin0'],
       };
     } else {
       specInfDescrMarkDef = '';

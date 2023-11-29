@@ -13,7 +13,7 @@ export default async function ProcessSpec(specUrl, sortTags) {
     if (typeof specUrl === 'string') {
       specObj = await Swagger({
         disableInterfaces: false,
-        url: specUrl,   
+        url: specUrl,
       });
     } else {
       specObj = await Swagger({
