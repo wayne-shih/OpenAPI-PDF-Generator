@@ -38,8 +38,8 @@ export default async function createPdf(specUrl, options) {
     darkGray: { color: '#666666' },
     red: { color: 'orangered' },
     blue: { color: '#005b96' },
-    mono: { font: 'RobotoMono', fontSize: 10 },
-    monoSub: { font: 'RobotoMono', fontSize: 8 },
+    mono: { font: 'Mono', fontSize: 10 },
+    monoSub: { font: 'Mono', fontSize: 8 },
   };
 
   const allContent = [];
@@ -88,23 +88,26 @@ export default async function createPdf(specUrl, options) {
         ],
       };
     },
+    defaultStyle: {
+      font: 'Inter',
+    },
     content: allContent,
     styles: pdfStyles,
   };
 
 
   pdfMake.fonts = {
-    Roboto: {
-      normal: 'Roboto-Regular.ttf',
-      bold: 'Roboto-Medium.ttf',
-      italics: 'Roboto-Italic.ttf',
-      bolditalics: 'Roboto-Medium.ttf',
+    Inter: {
+      normal: 'Inter-Regular.otf',
+      italics: 'Inter-Italic.otf',
+      bold: 'Inter-Bold.otf',
+      bolditalics: 'Inter-BoldItalic.otf',
     },
-    RobotoMono: {
-      normal: 'RobotoMono-Regular.ttf',
-      bold: 'RobotoMono-Regular.ttf',
-      italics: 'RobotoMono-Regular.ttf',
-      bolditalics: 'RobotoMono-Regular.ttf',
+    Mono: {
+      normal: '8f30371GeistMono-Regular.ttf',
+      italics: '8f30371GeistMono-Regular.ttf',
+      bold: '8f30371GeistMono-Bold.ttf',
+      bolditalics: '8f30371GeistMono-Bold.ttf',
     },
 
   };
