@@ -35,7 +35,7 @@ export default async function createPdf(specUrl, options) {
     primary: { color: (options.pdfPrimaryColor ? options.pdfPrimaryColor : '#be123c') }, // tw-rose-700
     alternate: { color: (options.pdfAlternateColor ? options.pdfAlternateColor : '#1d4ed8') }, // tw-blue-700
     gray: { color: '#737373' }, // tw-neutral-500
-    lightGray: { color: '#a3a3a3' }, // tw-neutral-400
+    lightGray: { color: '#737373' }, // tw-neutral-500
     darkGray: { color: '#525252' }, // tw-neutral-600
     red: { color: '#dc2626' }, // tw-red-600
     blue: { color: '#2563eb' }, // tw-blue-600
