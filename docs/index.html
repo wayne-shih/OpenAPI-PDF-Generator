@@ -3,24 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
-  <meta name="description" content="RapiPdf is Web Component based Swagger & OpenAPI Spec to PDF generator">
-  <meta name="keywords" content="RapiPdf, RapiDoc, ReDoc, Swagger, SwaggerUI, Custom Element, Web Component, OpenAPI, REST">
-
-  <link rel="shortcut icon" type="image/png" href="./images/logo.png"/>
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-132775238-2"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-132775238-2');
-  </script>
-
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css?family=Varela+Round" rel="stylesheet">
 
   <!-- Code Highlight -->
   <link rel="stylesheet" href="./highlight/styles/zenburn.css">
@@ -31,100 +13,37 @@
 
   <link rel="stylesheet" href="index.css">
 
-  <title>RapiPDF - Web Component based Swagger & OpenAPI PDF Generator</title>
+  <title>@wayne-shih/OpenAPI-PDF-Generator</title>
 </head>
 
 <body>
   <div class="banner container" id="banner">
     <div class="header">
-      <img class="logo" src="./images/logo-outline.png" style="width:48px;height:48px;margin-right:10px;" />
-      <div class="product-name">RapiPDF</div>
+      <div class="product-name">@wayne-shih / OpenAPI-PDF-Generator</div>
       <div class="menu" style="flex:1"></div>
       <nav class="menu" onclick="goToSection(event)">
         <a class="menu-item" href="#features"> Features </a>
         <a class="menu-item" href="#qstart"> Quick Start </a>
         <a class="menu-item" data-action="url" href="./api.html"> API </a>
-        <a class="menu-item" data-action="url" href="https://mrin9.github.io/RapiDoc/"> RapiDoc </a>
-        <a class="menu-item" data-action="git" href="https://github.com/mrin9/RapiPdf"> GitHub </a>
+        <a class="menu-item" data-action="git" href="https://github.com/wayne-shih/OpenAPI-PDF-Generator"> GitHub </a>
       </nav>
     </div>
-    <div>
-      <div class="banner-content">
-        <h1 class="banner-title">Web Component to generate PDF from OpenAPI Spec</h1>
-        <div class="banner-content-inner">
-          <p style="font-size:18px">Create beautiful, customizable API documentation in PDF format from your OpenAPI Specification</p>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex; justify-content: center;">
-      <div style="display:block">
-        <img class="screenshot shadow3" src="./images/pdf_sample1.png" />
-      </div>
-    </div>
   </div>
-  <div class="features container" id="features">
-
-    <div class="feature">
-      <object type="image/svg+xml" data="./images/webcomponent.svg" style="width:64px; height:64px;"> </object>
-      <div class="feature-info">
-        <div class="feature-title"> Web Component Standard</div>
-        <div class="feature-descr"> 
-          Free of any frameworks, setups, configs, build steps or packaging.
-          Can be used with any framework or just with vanilla javascript
-        </div>
-      </div>
-    </div>
-
-    <div class="feature">
-      <object type="image/svg+xml" data="./images/easy.svg" style="width:64px; height:64px;"> </object>
-      <div class="feature-info">
-        <div class="feature-title"> Easy Usage</div>
-        <div class="feature-descr"> 
-          Use It just like any other HTML Tag, use its various attributes to customize the generation of your PDF. 
-          Basic knowledge of HTML is all that's required 
-        </div>
-      </div>
-    </div>
-
-    <div class="feature">
-      <object type="image/svg+xml" data="./images/mask.svg" style="width:64px; height:64px;"> </object>
-      <div class="feature-info">
-        <div class="feature-title">Customizable</div>
-        <div class="feature-descr"> 
-          Change font colors to match your brand colors. 
-          Pick and choose the sections from the API Spec that you want to include in the PDF.
-        </div>
-      </div>
-    </div>
-
-    <div class="feature">
-      <object type="image/svg+xml" data="./images/gears.svg" style="width:64px; height:64px;"> </object>
-      <div class="feature-info">
-        <div class="feature-title"> Seamlessly interoperable</div>
-        <div class="feature-descr"> 
-          Loved by tech writers, designers, dev-ops, testers and developers alike, 
-          due to its simplicity, interoperability and powerful features.
-        </div>
-      </div>
-    </div>
-
-  </div>
-
   <div id="qstart" class="qstart container">
   <div style="display:flex; flex-direction: column; ">
-  <h2> Quickstart & Demo</h2> 
+  <h2>Quickstart & Demo</h2>
   Just copy the below code and save it in an html file. Then open it using a browser 
 
   <pre class="shadow code-block"><code class="html" style="border-radius:4px">
   &lt;!doctype html&gt;
   &lt;html&gt;
   &lt;head&gt;
-    &lt;script src="https://unpkg.com/rapipdf/dist/rapipdf-min.js"&gt;&lt;/script&gt;
+    &lt;script src="https://wayne-shih.github.io/OpenAPI-PDF-Generator/rapipdf-min.js"&gt;&lt;/script&gt;
   &lt;/head&gt;
   &lt;body&gt;
     &lt;rapi-pdf
       style = "width:700px; height:40px; font-size:18px;" 
-      spec-url = "https://mrin9.github.io/RapiPdf/examples/specs/petstore.json"
+      spec-url = "https://wayne-shih.github.io/OpenAPI-PDF-Generator/examples/specs/petstore.json"
       button-bg = "#b44646" 
     &gt; &lt;/rapi-pdf&gt;
   &lt;/body&gt; 
@@ -133,14 +52,14 @@
 
   <div> Go ahead, provide your Open API spec and click GENERATE PDF !!! </div>
   <rapi-pdf id='rapipdf' style="width:730px; height:40px; font-size:18px;"
-    spec-url="https://mrin9.github.io/RapiPdf/specs/petstore.json" 
-    button-bg="#b44646"
+    spec-url="https://wayne-shih.github.io/OpenAPI-PDF-Generator/specs/petstore.json" 
+    button-bg="#1d4ed8"
     pdf-title="API Reference"
   > </rapi-pdf>
 
   <div style="margin-top:16px;"> With different Color scheme </div>
   <rapi-pdf id='rapipdf' style="width:730px; height:40px; font-size:18px;"
-    spec-url="https://mrin9.github.io/RapiPdf/specs/petstore.json" 
+    spec-url="https://wayne-shih.github.io/OpenAPI-PDF-Generator/specs/petstore.json" 
     pdf-schema-style="table"
     button-bg="#b44646"
     pdf-primary-color="teal",
@@ -150,7 +69,7 @@
 
   <div style="margin-top:16px;"> With an alternate request/response model represnation style </div>
   <rapi-pdf id='rapipdf' style="width:730px; height:40px; font-size:18px;"
-    spec-url="https://mrin9.github.io/RapiPdf/specs/petstore.json" 
+    spec-url="https://wayne-shih.github.io/OpenAPI-PDF-Generator/specs/petstore.json" 
     pdf-schema-style="table"
     button-bg="#b44646"
     pdf-title="API Reference"
@@ -162,8 +81,6 @@
 
   <div id="footer" class="footer container">
     <div class="footer-item"> MIT Licence</div>
-    <div class="footer-item"> <a href="https://github.com/mrin9/RapiPdf"> GitHub</a></div>
-    <div class="footer-item"> <a href="https://www.npmjs.com/package/rapipdf"> npm</a></div>
   </div>
 
 
