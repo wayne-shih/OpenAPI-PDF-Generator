@@ -1,5 +1,5 @@
 /*!
- * RapiPdf 2.2.1 - WebComponent to generate PDF from OpenAPI spec
+ * RapiPdf 2.3.0 - WebComponent to generate PDF from OpenAPI spec
  * License: MIT
  * Repo   : https://github.com/mrin9/RapiPdf
  * Author : Mrinmoy Majumdar
