@@ -82,7 +82,7 @@ export default async function createPdf(specUrl, options) {
   const finalDocDef = {
     footer(currentPage, pageCount) {
       return {
-        margin: 10,
+        margin: 20,
         columns: [
           { text: options.pdfFooterText, style: ['sub', 'gray', 'left'] },
           { text: `${currentPage} of ${pageCount}`, style: ['sub', 'gray', 'right'] },
