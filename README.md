@@ -1,24 +1,15 @@
-<img alt="MrinDoc logo" src="https://github.com/mrin9/RapiPdf/blob/master/logo.png" width="60px" />
-
-
-<p align="center">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square"/>
-    <img src="https://img.shields.io/github/size/mrin9/rapipdf/dist/rapipdf-min.js.svg?colorB=blue&label=minified&style=flat-square">
-    <img src="https://img.shields.io/github/size/mrin9/rapipdf/dist/rapipdf-min.js.gz.svg?colorB=blue&label=zip&style=flat-square">
-</p>
-
-# RapiPDF
-Custom element for Open-API to PDF generation
+# @wayne-shih/OpenAPI-PDF-Generator
+OpenAPI (/Swagger) to PDF generator
 
 ## Features
 - Supports Swagger 2.0 and OpenAPI 3.0
 - Generate PDF using Web-Component
 - Works with any framework or with no framework
 - Plenty of customizing options, including selection of brand colors
-- Supported on Chrome, FireFox and Safari. (Not yet tested on Edge)
+- Supported on Chrome, Edge, FireFox and Safari
 
 ## Documentation
-[Check out the usage and examples](https://mrin9.github.io/RapiPdf/)
+This repo is a fork of [@mrin9/RapiPdf](https://github.com/mrin9/RapiPdf) with modifications on the PDF generation service. See the [RapiPdf site](https://mrin9.github.io/RapiPdf/) for more details on usage and examples.
 
 ## Build Process
 We recommend `yarn` over `npm` as we use yarn [resolutions](https://yarnpkg.com/lang/en/docs/selective-version-resolutions/) to keep the bundle size smaller. As of this writing this feature is not supported in npm natively
