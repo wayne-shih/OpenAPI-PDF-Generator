@@ -2,7 +2,6 @@
 import Swagger from 'swagger-client';
 import converter from 'swagger2openapi';
 
-
 export default async function ProcessSpec(specUrl, sortTags) {
   let jsonParsedSpec;
   let convertedSpec;
@@ -129,6 +128,14 @@ export default async function ProcessSpec(specUrl, sortTags) {
         if (commonParams) {
           if (fullPath.parameters) {
             finalParameters = commonParams.filter((commonParam) => {
+              if (fullPath.requestBody && fullPath.requestBody.$ref) {
+                const ref = fullPath.requestBody.$ref.split('/');
+                const refName = ref[ref.length - 1];
+                const refObj = openApiSpec.components.requestBodies[refName];
+                if (refObj) {
+                  fullPath.requestBody = refObj;
+                }
+              }
               if (!fullPath.parameters.some((param) => (commonParam.name === param.name && commonParam.in === param.in))) {
                 return commonParam;
               }
@@ -172,7 +179,6 @@ export default async function ProcessSpec(specUrl, sortTags) {
   }
 
   let securitySchemes = {};
-
   securitySchemes = (openApiSpec.components ? openApiSpec.components.securitySchemes : {});
   if (sortTags) {
     tags.sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
